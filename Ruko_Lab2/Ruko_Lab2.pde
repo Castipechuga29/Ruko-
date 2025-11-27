@@ -2,7 +2,7 @@
 // RUKO Y SU MANDADO
 // PARTE 1: INTRO CON LA MAMÁ
 // ==========================
-
+import processing.sound.*;
 // ESCENAS
 
 int scene = -1; // Inicializamos scene en -1 para asegurar que no se ejecute una escena no deseada al inicio
@@ -90,6 +90,10 @@ PImage[] dogFrames;
 PImage lv1;
 PImage gameoverImage;
 PImage lv2 ;
+SoundFile soundCollect;
+boolean soundsEnabled = false;
+SoundFile soundIntro;      // Sonido para la escena intro   // Sonido al recoger coleccionables
+SoundFile soundTransition;
 // --- SPRITES DEL PERSONAJE MUJER ---
 PImage mujerSpriteSheet;        // La hoja de sprites completa (Ye_Oldy_Girl_02.png)
 PImage[] mujerFrames;           // Animación de caminata/corrida
@@ -181,6 +185,7 @@ boolean gameOverActive = false;
 
 
 void setup() {
+  setupSounds();
   size(800, 600);
   bate = loadImage("bate.png");
   misterioso = loadImage("Misterioso-0.png");
@@ -255,8 +260,27 @@ void setup() {
   currentPlayerTTT = 1; // El jugador 1 comienza
   gameOverTTT = false;
   winnerTTT = "";
+   try {
+    soundCollect = new SoundFile(this, "collect.wav");
+    soundCollect.amp(0.7);
+    soundsEnabled = true;
+    println("✓ Sonidos cargados correctamente");
+  } catch (Exception e) {
+    println("✗ No se pudieron cargar sonidos: " + e.getMessage());
+    soundsEnabled = false;
+  }
 }
-
+void setupSounds() {
+  // Cargar los archivos de sonido (debes tener estos archivos en la carpeta data/)
+  soundIntro = new SoundFile(this, "intro.mp3");
+  soundCollect = new SoundFile(this, "collect.wav");
+  soundTransition = new SoundFile(this, "transition.wav");
+  
+  // Opcional: ajustar volumen (0.0 a 1.0)
+  soundIntro.amp(0.5);
+  soundCollect.amp(0.7);
+  soundTransition.amp(0.6);
+}
 
 
 
@@ -837,20 +861,19 @@ void drawTTTTransitionScene() {
 void keyPressed() {
   // Lógica de Salto para la escena de Gameplay (scene 1)
   if (scene == 1) {
-    if (ruko != null) { // Siempre verificar que el jugador exista antes de llamar a un método
+    if (ruko != null) {
       if (key == 'w' || key == 'W') {
-        ruko.jump(); // ¡Ruko salta en la escena 1!
+        ruko.jump();
       }
     }
   }
   
-  // Lógica de Ataque para la escena de Gameplay (scene 1)
   if (scene == 1 && weaponAcquired && key == ' ') {
     isAttacking = true;
     attackTimer = 3;
   }
 
-  // Lógica original de la escena 0 (Intro)
+  // MODIFICADO: Agregar sonido al cambiar de escena
   if (scene == 0 && key == ENTER) {
     if (textIndex >= dialogues[currentDialogue].length()) {
       if (currentDialogue < dialogues.length - 1) {
@@ -858,7 +881,11 @@ void keyPressed() {
         displayedText = "";
         textIndex = 0;
       } else {
-        // Transición a TIP_SCENE
+        // Detener sonido de intro
+        soundIntro.stop();
+        // Reproducir sonido de transición
+        soundTransition.play();
+        
         currentDialogue = 0;
         displayedText = "";
         textIndex = 0;
@@ -867,7 +894,6 @@ void keyPressed() {
     }
   }
   
-  // Lógica original de la escena 10 (TIP_SCENE)
   if (scene == TIP_SCENE && key == ENTER) {
     if (textIndex >= tip1[currentDialogue].length()) {
       if (currentDialogue < tip1.length - 1) {
@@ -875,17 +901,18 @@ void keyPressed() {
         displayedText = "";
         textIndex = 0;
       } else {
-        // Al terminar el diálogo del Tip, iniciar el juego
+        // Reproducir sonido de transición
+        soundTransition.play();
+        
         currentDialogue = 0;
         displayedText = "";
         textIndex = 0;
         startGame();  
-        scene = 1; // Iniciar Gameplay
+        scene = 1;
       }
     }
   }
 
-  // Lógica original de la escena 4 (Final)
   if (scene == 4 && key == ENTER) {
     if (textIndex >= dialoguesFinal[currentDialogue].length()) {
       if (currentDialogue < dialoguesFinal.length - 1) {
@@ -893,12 +920,13 @@ void keyPressed() {
         displayedText = "";
         textIndex = 0;
       } else {
+        // Reproducir sonido de transición al final
+        soundTransition.play();
         scene = 5;
       }
     }
   }
 
-  // Lógica original de la escena 6 (Créditos)
   if (scene == 6 && key == ENTER) {
     if (textIndex >= credit[currentDialogue].length()) {
       if (currentDialogue < credit.length - 1) {
@@ -909,7 +937,12 @@ void keyPressed() {
     }
   }
 }
-
+// Detener todos los sonidos (útil para game over o menú)
+void stopAllSounds() {
+  if (soundIntro != null && soundIntro.isPlaying()) soundIntro.stop();
+  if (soundCollect != null && soundCollect.isPlaying()) soundCollect.stop();
+  if (soundTransition != null && soundTransition.isPlaying()) soundTransition.stop();
+}
 void info() {
   info1 = loadImage("info2.png");
   image(info1, 0, 0, width, height);

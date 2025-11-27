@@ -2,23 +2,24 @@ PImage fondo;  // imagen del fondo para la intro
 
 // ESCENA 0: INTRO
 void drawIntroScene() {
+  // Reproducir sonido solo una vez al entrar a la escena
+  if (!soundIntro.isPlaying()) {
+    soundIntro.play();
+  }
+  
   image(fondo, 0, 0, width, height);
-  // Mostrar imagen de la mamá
   image(momFrames[currentFrame], width / 2 - 100, height / 2 - 150, 200, 200);
 
-  // Diálogo tipo máquina de escribir
   if (frameCount % textSpeed == 0 && textIndex < dialogues[currentDialogue].length()) {
     displayedText += dialogues[currentDialogue].charAt(textIndex);
     textIndex++;
   }
 
-  // Mostrar texto
   fill(255);
-  rect(0, height - 100, width, 100); // cuadro de texto
+  rect(0, height - 100, width, 100);
   fill(0);
   text(displayedText, width / 2, height - 60);
 
-  // Cambio de imagen cada cierto tiempo
   frameTimer++;
   if (frameTimer > frameInterval && currentFrame < momFrames.length - 1) {
     currentFrame++;
